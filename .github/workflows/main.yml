@@ -65,14 +65,19 @@ jobs:
               exit 1
           }
 
+          $authKey = $authKey.Trim()
           $tsPath = "C:\Program Files\Tailscale\tailscale.exe"
+          Write-Host "Connecting to Tailscale..."
           & $tsPath up --authkey=$authKey --hostname="gh-runner-$env:GITHUB_RUN_ID"
           
           $tsIP = $null
           $retries = 0
           while (-not $tsIP -and $retries -lt 15) {
-              $tsIP = (& $tsPath ip -4).Trim()
-              if ($tsIP) { break }
+              $rawIp = & $tsPath ip -4 2>$null
+              if ($rawIp) {
+                  $tsIP = $rawIp.ToString().Trim()
+                  if ($tsIP) { break }
+              }
               Start-Sleep -Seconds 4
               $retries++
           }
